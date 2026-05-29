@@ -4,7 +4,7 @@
  * Enables complete offline operation as fallback.
  */
 
-const CACHE_NAME = 'nostr-keep-cache-v16';
+const CACHE_NAME = 'nostr-keep-cache-v17';
 const APP_FILES = [
   './',
   './index.html',
@@ -12,7 +12,10 @@ const APP_FILES = [
   './app.js',
   './db.js',
   './nostr.js',
-  './manifest.json'
+  './manifest.json',
+  './icons/icon.svg',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 const CDN_FILES = [
   'https://cdn.jsdelivr.net/npm/nostr-tools@1.17.0/lib/nostr.bundle.min.js',
