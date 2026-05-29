@@ -252,33 +252,63 @@ class NostrSyncManager {
   }
 
   /**
-   * Encrypts plain text (JSON string of the note) for our own pubkey
+   * Encrypts plain text (JSON string of the note) for our own pubkey using modern NIP-44
    */
   async _encrypt(plaintext) {
     if (this.useExtension) {
-      if (!window.nostr || !window.nostr.nip04) {
-        throw new Error('NIP-07 Extension does not support NIP-04 encryption');
+      if (window.nostr && window.nostr.nip44) {
+        return await window.nostr.nip44.encrypt(this.pubKey, plaintext);
       }
-      return await window.nostr.nip04.encrypt(this.pubKey, plaintext);
+      // Fallback to NIP-04 if extension doesn't support NIP-44 yet
+      if (window.nostr && window.nostr.nip04) {
+        console.warn('NIP-07 Extension does not support NIP-44 yet. Falling back to NIP-04.');
+        return await window.nostr.nip04.encrypt(this.pubKey, plaintext);
+      }
+      throw new Error('NIP-07 Extension does not support encryption');
     } else {
       if (!this.privKey) throw new Error('No private key available for encryption');
+      if (window.NostrTools && window.NostrTools.nip44 && window.NostrTools.nip44.v2) {
+        const conversationKey = window.NostrTools.nip44.v2.getConversationKey(this.privKey, this.pubKey);
+        return window.NostrTools.nip44.v2.encrypt(plaintext, conversationKey);
+      }
+      // Fallback to NIP-04 if NostrTools doesn't have NIP-44 v2 loaded
       return await window.NostrTools.nip04.encrypt(this.privKey, this.pubKey, plaintext);
     }
   }
 
   /**
-   * Decrypts encrypted cipher text from our own events
+   * Decrypts encrypted cipher text from our own events using modern NIP-44
    */
   async _decrypt(ciphertext) {
     try {
       if (this.useExtension) {
-        if (!window.nostr || !window.nostr.nip04) {
-          throw new Error('NIP-07 Extension does not support NIP-04 decryption');
+        if (window.nostr && window.nostr.nip44) {
+          try {
+            return await window.nostr.nip44.decrypt(this.pubKey, ciphertext);
+          } catch (e) {
+            // If decrypting with NIP-44 fails, try NIP-04 as a fallback for legacy notes
+            if (window.nostr.nip04) {
+              return await window.nostr.nip04.decrypt(this.pubKey, ciphertext);
+            }
+            throw e;
+          }
+        } else if (window.nostr && window.nostr.nip04) {
+          return await window.nostr.nip04.decrypt(this.pubKey, ciphertext);
         }
-        return await window.nostr.nip04.decrypt(this.pubKey, ciphertext);
+        throw new Error('NIP-07 Extension does not support decryption');
       } else {
         if (!this.privKey) throw new Error('No private key available for decryption');
-        return await window.NostrTools.nip04.decrypt(this.privKey, this.pubKey, ciphertext);
+        if (window.NostrTools && window.NostrTools.nip44 && window.NostrTools.nip44.v2) {
+          try {
+            const conversationKey = window.NostrTools.nip44.v2.getConversationKey(this.privKey, this.pubKey);
+            return window.NostrTools.nip44.v2.decrypt(ciphertext, conversationKey);
+          } catch (e) {
+            // Fallback to NIP-04 for legacy notes
+            return await window.NostrTools.nip04.decrypt(this.privKey, this.pubKey, ciphertext);
+          }
+        } else {
+          return await window.NostrTools.nip04.decrypt(this.privKey, this.pubKey, ciphertext);
+        }
       }
     } catch (e) {
       console.error('Decryption failed for payload:', ciphertext, e);
