@@ -1,0 +1,24 @@
+{
+  "name": "Nostr Keep - Secure Offline Notes",
+  "short_name": "Nostr Keep",
+  "description": "An offline-first Google Keep clone built on top of the Nostr protocol. Secure, encrypted, and decentralized.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#202124",
+  "theme_color": "#202124",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

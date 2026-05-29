@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#202124">
+  <meta name="description" content="Nostr Keep — A Google Keep clone built on Nostr. Encrypted, offline-first notes.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Nostr Keep</title>
+  <link rel="stylesheet" href="index.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <script src="https://cdn.jsdelivr.net/npm/nostr-tools@1.17.0/lib/nostr.bundle.min.js"></script>
+</head>
+<body>
+
+<div class="app-container" id="appContainer">
+
+  <!-- ======= HEADER ======= -->
+  <header>
+    <div class="header-left">
+      <button class="icon-btn" id="menuToggle" aria-label="Main menu">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+      </button>
+      <div class="brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
+        </div>
+        <span class="brand-name">Keep</span>
+      </div>
+    </div>
+
+    <div class="search-container">
+      <input type="text" class="search-bar" id="searchBar" placeholder="Search">
+      <div class="search-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <!-- Circular Sync/Refresh Button (matches Google Keep style) -->
+      <button class="icon-btn" id="syncNowBtnHeader" aria-label="Sync now" title="Sync now" style="position:relative;">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        <span class="sync-dot-badge offline" id="syncDotHeader"></span>
+      </button>
+
+      <button class="icon-btn view-toggle-btn" id="viewToggle" aria-label="Toggle view" title="Change view">
+        <svg id="gridIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3v8h8V3H3zm6 6H5V5h4v4zm-6 4v8h8v-8H3zm6 6H5v-4h4v4zm4-16v8h8V3h-8zm6 6h-4V5h4v4zm-6 4v8h8v-8h-8zm6 6h-4v-4h4v4z"/></svg>
+        <svg id="listIcon" style="display:none;" viewBox="0 0 24 24" fill="currentColor"><path d="M4 14h4v-4H4v4zm0 5h4v-4H4v4zM4 9h4V5H4v4zm5 5h12v-4H9v4zm0 5h12v-4H9v4zM9 5v4h12V5H9z"/></svg>
+      </button>
+
+      <!-- Profile button opens settings/identity -->
+      <button class="profile-btn" id="profileBtn" aria-label="Account and settings" title="Account and settings">
+        <span class="profile-initials" id="profileInitials">?</span>
+        <img id="profileImg" style="display:none;" alt="Profile">
+      </button>
+
+      <!-- Hidden elements to preserve syncText selector compatibility in app.js -->
+      <span id="syncText" style="display:none;"></span>
+    </div>
+  </header>
+
+  <!-- ======= SIDEBAR ======= -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+  <aside class="sidebar" id="sidebar">
+    <a href="#" class="sidebar-item active" id="navNotes" data-view="notes">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
+      <span class="sidebar-label">Notes</span>
+    </a>
+
+    <div id="sidebarLabelsContainer"></div>
+
+    <a href="#" class="sidebar-item" id="navEditLabels" data-action="edit-labels">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+      <span class="sidebar-label">Edit labels</span>
+    </a>
+
+    <div class="sidebar-divider"></div>
+
+    <a href="#" class="sidebar-item" id="navArchive" data-view="archive">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z"/></svg>
+      <span class="sidebar-label">Archive</span>
+    </a>
+
+    <a href="#" class="sidebar-item" id="navTrash" data-view="trash">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+      <span class="sidebar-label">Bin</span>
+    </a>
+  </aside>
+
+  <!-- ======= MAIN ======= -->
+  <main class="main-content" id="mainContent">
+
+    <!-- Note Creator (desktop only) -->
+    <div class="note-creator-container" id="noteCreatorContainer">
+      <div class="note-creator" id="noteCreator">
+        <div class="note-creator-collapsed" id="creatorCollapsed">
+          <span>Take a note...</span>
+          <button class="icon-btn" aria-label="New list">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          </button>
+          <button class="icon-btn" aria-label="New drawing">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z"/></svg>
+          </button>
+          <button class="icon-btn" aria-label="New image note">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+          </button>
+        </div>
+
+        <div class="note-creator-expanded" id="creatorExpanded">
+          <div class="editor-title-container">
+            <input type="text" class="editor-title" id="creatorTitle" placeholder="Title">
+            <button class="icon-btn" id="creatorPinBtn" aria-label="Pin note">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 4v7l2 3v2h-6v5l-1 1-1-1v-5H5v-2l2-3V4c0-1.1.9-2 2-2h6c1.1 0 2 .9 2 2z"/></svg>
+            </button>
+          </div>
+          <textarea class="editor-content" id="creatorContent" placeholder="Take a note..." rows="3"></textarea>
+          <div class="editor-tags-display" id="creatorTagsDisplay"></div>
+          <div class="editor-toolbar">
+            <div class="editor-actions">
+              <button class="icon-btn" id="creatorColorBtn" aria-label="Background options" title="Background options">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22C6.49 22 2 17.51 2 12S6.49 2 12 2s10 4.04 10 9c0 3.31-2.69 6-6 6h-1.77c-.28 0-.5.22-.5.5 0 .12.05.23.13.33.41.47.64 1.06.64 1.67A2.5 2.5 0 0112 22zm0-18c-4.41 0-8 3.59-8 8s3.59 8 8 8c.28 0 .5-.22.5-.5a.54.54 0 00-.14-.35c-.41-.46-.63-1.05-.63-1.65a2.5 2.5 0 012.5-2.5H16c2.21 0 4-1.79 4-4 0-3.86-3.59-7-8-7z"/><circle cx="6.5" cy="11.5" r="1.5"/><circle cx="9.5" cy="7.5" r="1.5"/><circle cx="14.5" cy="7.5" r="1.5"/><circle cx="17.5" cy="11.5" r="1.5"/></svg>
+              </button>
+              <button class="icon-btn" id="creatorLabelBtn" aria-label="Add label" title="Add label">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z"/></svg>
+              </button>
+              <button class="icon-btn" id="creatorArchiveBtn" aria-label="Archive" title="Archive">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z"/></svg>
+              </button>
+            </div>
+            <button class="editor-close-btn" id="creatorCloseBtn">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pinned Section -->
+    <div class="notes-section" id="pinnedSection" style="display:none;">
+      <div class="section-title">Pinned</div>
+      <div class="notes-grid grid-view" id="pinnedNotesGrid"></div>
+    </div>
+
+    <!-- Others Section -->
+    <div class="notes-section" id="othersSection">
+      <div class="section-title" id="othersSectionTitle" style="display:none;">Others</div>
+      <div class="notes-grid grid-view" id="othersNotesGrid"></div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <svg width="120" height="120" viewBox="0 0 24 24" fill="currentColor"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
+      <h3>Notes you add appear here</h3>
+      <p>Click the Take a note field to create your first note.</p>
+    </div>
+
+  </main>
+
+  <!-- FAB (mobile) -->
+  <button class="fab" id="mobileFab" aria-label="Create note">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+  </button>
+
+</div>
+
+<!-- ======= MODALS ======= -->
+
+<!-- 1. Edit Note Modal -->
+<div class="modal-overlay" id="editNoteModal">
+  <div class="modal-card" id="modalCard">
+    <input type="text" class="modal-title-input" id="modalTitle" placeholder="Title">
+    <textarea class="modal-content-input" id="modalContent" placeholder="Note"></textarea>
+    <div class="editor-tags-display" id="modalTagsDisplay"></div>
+    <div class="editor-toolbar">
+      <div class="editor-actions">
+        <button class="icon-btn" id="modalColorBtn" aria-label="Background options">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22C6.49 22 2 17.51 2 12S6.49 2 12 2s10 4.04 10 9c0 3.31-2.69 6-6 6h-1.77c-.28 0-.5.22-.5.5 0 .12.05.23.13.33.41.47.64 1.06.64 1.67A2.5 2.5 0 0112 22zm0-18c-4.41 0-8 3.59-8 8s3.59 8 8 8c.28 0 .5-.22.5-.5a.54.54 0 00-.14-.35c-.41-.46-.63-1.05-.63-1.65a2.5 2.5 0 012.5-2.5H16c2.21 0 4-1.79 4-4 0-3.86-3.59-7-8-7z"/><circle cx="6.5" cy="11.5" r="1.5"/><circle cx="9.5" cy="7.5" r="1.5"/><circle cx="14.5" cy="7.5" r="1.5"/><circle cx="17.5" cy="11.5" r="1.5"/></svg>
+        </button>
+        <button class="icon-btn" id="modalLabelBtn" aria-label="Add label">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z"/></svg>
+        </button>
+        <button class="icon-btn" id="modalArchiveBtn" aria-label="Archive">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z"/></svg>
+        </button>
+        <button class="icon-btn" id="modalPinBtn" aria-label="Pin note">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 4v7l2 3v2h-6v5l-1 1-1-1v-5H5v-2l2-3V4c0-1.1.9-2 2-2h6c1.1 0 2 .9 2 2z"/></svg>
+        </button>
+        <button class="icon-btn" id="modalTrashBtn" aria-label="Delete" style="color:#f28b82;">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+        </button>
+      </div>
+      <button class="editor-close-btn" id="modalCloseBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- 2. Edit Labels Modal -->
+<div class="modal-overlay" id="editLabelsModal">
+  <div class="modal-card" style="max-width:360px;">
+    <div style="font-size:16px;font-weight:500;padding:4px 0 16px;">Edit labels</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+      <button class="icon-btn" id="createLabelBtn">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      </button>
+      <input type="text" class="form-input" id="newLabelInput" placeholder="Create new label" style="flex:1;height:36px;">
+    </div>
+    <div class="labels-manager-list" id="labelsManagerList"></div>
+    <div style="display:flex;justify-content:flex-end;padding-top:12px;">
+      <button class="editor-close-btn" id="labelsModalCloseBtn">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Settings / Nostr Identity Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal-card" style="max-width:440px;">
+    <div style="font-size:18px;font-weight:500;padding:4px 0 16px;border-bottom:1px solid var(--border-card);margin-bottom:16px;">Account &amp; Settings</div>
+
+    <div class="settings-modal-content">
+
+      <div id="loggedOutSection">
+        <p style="font-size:14px;color:var(--text-secondary);margin-bottom:16px;line-height:1.6;">
+          Connect your Nostr identity to encrypt and sync your notes across devices via relays.
+        </p>
+        <button class="btn-primary" id="extensionLoginBtn" style="width:100%;margin-bottom:12px;">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+          Connect Browser Extension (NIP-07)
+        </button>
+      </div>
+
+      <div id="loggedInSection" style="display:none;">
+        <div style="background:#303134;padding:12px;border-radius:8px;margin-bottom:16px;">
+          <div class="form-label">Public Key</div>
+          <div id="loggedInNpub" style="font-size:12px;font-family:monospace;word-break:break-all;margin:4px 0 12px;color:var(--accent-blue);"></div>
+          <div class="form-label">Login Method</div>
+          <div id="loggedInMethod" style="font-size:14px;font-weight:500;margin-top:2px;"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-primary" id="syncNowBtn" style="flex:1;">Sync Now</button>
+          <button class="btn-danger" id="logoutBtn" style="flex:1;">Log Out</button>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--border-card);padding-top:16px;margin-top:8px;">
+        <div style="font-size:14px;font-weight:500;margin-bottom:8px;">Relays</div>
+        <div id="relaysList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
+        <div style="display:flex;gap:8px;">
+          <input type="text" class="form-input" id="newRelayInput" placeholder="wss://relay.example.com" style="flex:1;height:36px;">
+          <button class="btn-secondary" id="addRelayBtn" style="height:36px;padding:0 16px;">Add</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;padding-top:16px;border-top:1px solid var(--border-card);margin-top:16px;">
+      <button class="editor-close-btn" id="settingsCloseBtn">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Color Picker Popup -->
+<div class="popup-menu" id="colorPickerPopup">
+  <div class="color-grid">
+    <div class="color-option selected" data-color="default" style="background:#202124;border:2px solid #5f6368;"></div>
+    <div class="color-option" data-color="coral" style="background:#77172e;"></div>
+    <div class="color-option" data-color="peach" style="background:#692b17;"></div>
+    <div class="color-option" data-color="sand" style="background:#7c4a03;"></div>
+    <div class="color-option" data-color="mint" style="background:#0c625d;"></div>
+    <div class="color-option" data-color="sage" style="background:#2a5c2b;"></div>
+    <div class="color-option" data-color="fog" style="background:#256377;"></div>
+    <div class="color-option" data-color="storm" style="background:#284255;"></div>
+    <div class="color-option" data-color="dusk" style="background:#472e5b;"></div>
+    <div class="color-option" data-color="blossom" style="background:#6c394f;"></div>
+    <div class="color-option" data-color="clay" style="background:#4b443a;"></div>
+    <div class="color-option" data-color="chalk" style="background:#232427;"></div>
+  </div>
+</div>
+
+<!-- Labels Picker Popup -->
+<div class="popup-menu" id="labelsPickerPopup" style="padding:8px 0;min-width:200px;">
+  <div style="font-size:12px;color:var(--text-hint);font-weight:500;padding:4px 12px 8px;">Label note</div>
+  <div id="labelsPickerList" style="max-height:200px;overflow-y:auto;"></div>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
