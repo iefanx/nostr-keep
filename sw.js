@@ -4,7 +4,7 @@
  * Enables complete offline operation as fallback.
  */
 
-const CACHE_NAME = 'nostr-keep-cache-v18';
+const CACHE_NAME = 'nostr-keep-cache-v19';
 const APP_FILES = [
   './',
   './index.html',

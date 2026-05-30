@@ -360,10 +360,14 @@ class NostrSyncManager {
     const encryptedContent = await this._encrypt(payload);
 
     // STRICT SECURITY VERIFICATION: Ensure cleartext title/content is never leaked to Nostr relays.
-    // Verify ciphertext format, ensure it does not match plain text, and does not contain cleartext data.
+    // Verify ciphertext format: must be valid NIP-04 (?iv=) or NIP-44 (compact base64 format), and must not contain raw JSON or cleartext title/content.
+    const isNip04 = encryptedContent && encryptedContent.includes('?iv=');
+    const isNip44 = encryptedContent && !encryptedContent.includes('{') && !encryptedContent.includes(' ') && encryptedContent.length > 10;
+    const isValidCipher = isNip04 || isNip44;
+
     if (!encryptedContent || 
         encryptedContent === payload || 
-        !encryptedContent.includes('?iv=') ||
+        !isValidCipher ||
         (note.title && note.title.trim() !== '' && encryptedContent.includes(note.title.trim())) ||
         (note.content && note.content.trim() !== '' && encryptedContent.includes(note.content.trim()))) {
       throw new Error("Security Alert: Note encryption verification failed! Blocked transmission to prevent cleartext leakage.");
