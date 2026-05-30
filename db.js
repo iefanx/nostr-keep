@@ -27,6 +27,15 @@ class NostrKeepDB {
   async init() {
     if (this.db) return this.db;
 
+    // Isolate database per user pubkey if logged in to allow separate browser sandbox
+    const loginType = localStorage.getItem('nostr_keep_login_type');
+    const pubkey = localStorage.getItem('nostr_keep_pubkey');
+    if (loginType && loginType !== 'none' && pubkey) {
+      this.dbName = `nostr_keep_db_${pubkey.toLowerCase()}`;
+    } else {
+      this.dbName = 'nostr_keep_db';
+    }
+
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(this.dbName, this.dbVersion);
 
@@ -65,6 +74,23 @@ class NostrKeepDB {
         }
       };
     });
+  }
+
+  /**
+   * Closes the active database connection, shifts the database target name, and opens it
+   */
+  async changeUser(pubkey) {
+    if (this.db) {
+      this.db.close();
+      this.db = null;
+    }
+    if (pubkey) {
+      this.dbName = `nostr_keep_db_${pubkey.toLowerCase()}`;
+    } else {
+      this.dbName = 'nostr_keep_db';
+    }
+    console.log(`[DB] Context swapper: Switching database target to ${this.dbName}`);
+    return await this.init();
   }
 
   /**
@@ -115,7 +141,11 @@ class NostrKeepDB {
       labels: Array.isArray(note.labels) ? note.labels : [],
       updated_at: note.updated_at || Date.now(),
       dirty: setDirty ? 1 : 0,
-      deleted: note.deleted ? 1 : 0
+      deleted: note.deleted ? 1 : 0,
+      collaborators: Array.isArray(note.collaborators) ? note.collaborators : [],
+      owner_pubkey: note.owner_pubkey || null,
+      parent_note_id: note.parent_note_id || null,
+      accepted: note.accepted !== undefined ? (note.accepted ? 1 : 0) : 1
     };
 
     return new Promise((resolve, reject) => {
@@ -147,8 +177,8 @@ class NostrKeepDB {
       const request = store.getAll();
       request.onsuccess = () => {
         const allNotes = request.result || [];
-        // Filter out archived, trashed, or locally deleted notes
-        const active = allNotes.filter(n => !n.archived && !n.trash && !n.deleted);
+        // Filter out archived, trashed, locally deleted, or pending notes
+        const active = allNotes.filter(n => !n.archived && !n.trash && !n.deleted && (n.accepted === undefined || n.accepted === 1));
         resolve(active);
       };
       request.onerror = () => reject(request.error);
@@ -164,7 +194,7 @@ class NostrKeepDB {
       const request = store.getAll();
       request.onsuccess = () => {
         const allNotes = request.result || [];
-        const archived = allNotes.filter(n => n.archived && !n.trash && !n.deleted);
+        const archived = allNotes.filter(n => n.archived && !n.trash && !n.deleted && (n.accepted === undefined || n.accepted === 1));
         resolve(archived);
       };
       request.onerror = () => reject(request.error);
@@ -180,8 +210,24 @@ class NostrKeepDB {
       const request = store.getAll();
       request.onsuccess = () => {
         const allNotes = request.result || [];
-        const trashed = allNotes.filter(n => n.trash && !n.deleted);
+        const trashed = allNotes.filter(n => n.trash && !n.deleted && (n.accepted === undefined || n.accepted === 1));
         resolve(trashed);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  /**
+   * Get all pending collaborative note invitations
+   */
+  async getPendingInvitations() {
+    return new Promise((resolve, reject) => {
+      const { store } = this._transaction('notes', 'readonly');
+      const request = store.getAll();
+      request.onsuccess = () => {
+        const allNotes = request.result || [];
+        const pending = allNotes.filter(n => !n.deleted && n.accepted === 0);
+        resolve(pending);
       };
       request.onerror = () => reject(request.error);
     });
@@ -234,11 +280,28 @@ class NostrKeepDB {
   }
 
   /**
+   * Get a label by name
+   */
+  async getLabelByName(name) {
+    return new Promise((resolve, reject) => {
+      const { store } = this._transaction('labels', 'readonly');
+      const index = store.index('name');
+      const request = index.get(name);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  /**
    * Add a new label
    */
   async addLabel(name) {
     if (!name || name.trim() === '') return null;
     const cleanName = name.trim();
+
+    // Check if label already exists to avoid Transaction Abort / ConstraintError
+    const existing = await this.getLabelByName(cleanName);
+    if (existing) return existing;
 
     return new Promise((resolve, reject) => {
       const { store } = this._transaction('labels', 'readwrite');
@@ -247,16 +310,7 @@ class NostrKeepDB {
         resolve({ id: e.target.result, name: cleanName });
       };
       request.onerror = (e) => {
-        // Handle duplicate names gracefully
-        if (e.target.error.name === 'ConstraintError') {
-          // Fetch existing to return it
-          const index = store.index('name');
-          const getReq = index.get(cleanName);
-          getReq.onsuccess = () => resolve(getReq.result);
-          getReq.onerror = () => reject(getReq.error);
-        } else {
-          reject(e.target.error);
-        }
+        reject(e.target.error);
       };
     });
   }
@@ -277,7 +331,7 @@ class NostrKeepDB {
    * Rename a label and update it across all notes
    */
   async renameLabel(id, oldName, newName) {
-    if (!newName || newName.trim() === '') return false;
+    if (!newName || newName.trim() === '') return [];
     const cleanNewName = newName.trim();
 
     // 1. Update Label Store
@@ -289,15 +343,17 @@ class NostrKeepDB {
     });
 
     // 2. Update Notes that reference this label
+    const modified = [];
     const allNotes = await this.getAllNotesRaw();
     for (const note of allNotes) {
       if (note.labels.includes(oldName)) {
         note.labels = note.labels.map(l => l === oldName ? cleanNewName : l);
-        await this.saveNote(note, true); // Mark as dirty since tag renamed!
+        const saved = await this.saveNote(note, true); // Mark as dirty since tag renamed!
+        modified.push(saved);
       }
     }
 
-    return true;
+    return modified;
   }
 
   // =========================================================================

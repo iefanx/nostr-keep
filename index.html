@@ -13,7 +13,8 @@
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
   <link rel="icon" type="image/png" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <script src="https://cdn.jsdelivr.net/npm/nostr-tools@1.17.0/lib/nostr.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/nostr-tools@2.10.4/lib/nostr.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 
@@ -22,14 +23,14 @@
   <!-- ======= HEADER ======= -->
   <header>
     <div class="header-left">
-      <button class="icon-btn" id="menuToggle" aria-label="Main menu">
+      <button class="icon-btn" id="menuToggle" aria-label="Main menu" title="Main menu">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
       </button>
       <div class="brand">
         <div class="brand-logo">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
         </div>
-        <span class="brand-name">Keep</span>
+        <h1 class="brand-name">Keep</h1>
       </div>
     </div>
 
@@ -66,26 +67,32 @@
   <!-- ======= SIDEBAR ======= -->
   <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
   <aside class="sidebar" id="sidebar">
-    <a href="#" class="sidebar-item active" id="navNotes" data-view="notes">
+    <a href="#" class="sidebar-item active" id="navNotes" data-view="notes" title="Notes">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
       <span class="sidebar-label">Notes</span>
     </a>
 
     <div id="sidebarLabelsContainer"></div>
 
-    <a href="#" class="sidebar-item" id="navEditLabels" data-action="edit-labels">
+    <a href="#" class="sidebar-item" id="navEditLabels" data-action="edit-labels" title="Edit labels">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
       <span class="sidebar-label">Edit labels</span>
     </a>
 
     <div class="sidebar-divider"></div>
 
-    <a href="#" class="sidebar-item" id="navArchive" data-view="archive">
+    <a href="#" class="sidebar-item" id="navInvitations" data-view="invitations" title="Invitations" style="position:relative;">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+      <span class="sidebar-label">Shares</span>
+      <span class="sync-dot-badge offline" id="invitationsDot" style="display:none;background:#f28b82;width:8px;height:8px;position:absolute;top:12px;right:20px;box-shadow:none;"></span>
+    </a>
+
+    <a href="#" class="sidebar-item" id="navArchive" data-view="archive" title="Archive">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z"/></svg>
       <span class="sidebar-label">Archive</span>
     </a>
 
-    <a href="#" class="sidebar-item" id="navTrash" data-view="trash">
+    <a href="#" class="sidebar-item" id="navTrash" data-view="trash" title="Bin">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
       <span class="sidebar-label">Bin</span>
     </a>
@@ -113,7 +120,7 @@
         <div class="note-creator-expanded" id="creatorExpanded">
           <div class="editor-title-container">
             <input type="text" class="editor-title" id="creatorTitle" placeholder="Title">
-            <button class="icon-btn" id="creatorPinBtn" aria-label="Pin note">
+            <button class="icon-btn" id="creatorPinBtn" aria-label="Pin note" title="Pin note">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 4v7l2 3v2h-6v5l-1 1-1-1v-5H5v-2l2-3V4c0-1.1.9-2 2-2h6c1.1 0 2 .9 2 2z"/></svg>
             </button>
           </div>
@@ -127,11 +134,14 @@
               <button class="icon-btn" id="creatorLabelBtn" aria-label="Add label" title="Add label">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z"/></svg>
               </button>
+              <button class="icon-btn" id="creatorCollaborateBtn" aria-label="Collaborators" title="Collaborators">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+              </button>
               <button class="icon-btn" id="creatorArchiveBtn" aria-label="Archive" title="Archive">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z"/></svg>
               </button>
             </div>
-            <button class="editor-close-btn" id="creatorCloseBtn">Close</button>
+            <button class="editor-close-btn" id="creatorCloseBtn" title="Close and save">Close</button>
           </div>
         </div>
       </div>
@@ -172,26 +182,37 @@
   <div class="modal-card" id="modalCard">
     <input type="text" class="modal-title-input" id="modalTitle" placeholder="Title">
     <textarea class="modal-content-input" id="modalContent" placeholder="Note"></textarea>
+    <div class="typing-indicator-banner" id="modalTypingBanner" style="display:none;"></div>
+    <div class="modal-content-preview" id="modalContentPreview" style="display:none;"></div>
     <div class="editor-tags-display" id="modalTagsDisplay"></div>
     <div class="editor-toolbar">
       <div class="editor-actions">
-        <button class="icon-btn" id="modalColorBtn" aria-label="Background options">
+        <button class="icon-btn" id="modalColorBtn" aria-label="Background options" title="Background options">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22C6.49 22 2 17.51 2 12S6.49 2 12 2s10 4.04 10 9c0 3.31-2.69 6-6 6h-1.77c-.28 0-.5.22-.5.5 0 .12.05.23.13.33.41.47.64 1.06.64 1.67A2.5 2.5 0 0112 22zm0-18c-4.41 0-8 3.59-8 8s3.59 8 8 8c.28 0 .5-.22.5-.5a.54.54 0 00-.14-.35c-.41-.46-.63-1.05-.63-1.65a2.5 2.5 0 012.5-2.5H16c2.21 0 4-1.79 4-4 0-3.86-3.59-7-8-7z"/><circle cx="6.5" cy="11.5" r="1.5"/><circle cx="9.5" cy="7.5" r="1.5"/><circle cx="14.5" cy="7.5" r="1.5"/><circle cx="17.5" cy="11.5" r="1.5"/></svg>
         </button>
-        <button class="icon-btn" id="modalLabelBtn" aria-label="Add label">
+        <button class="icon-btn" id="modalLabelBtn" aria-label="Add label" title="Add label">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z"/></svg>
         </button>
-        <button class="icon-btn" id="modalArchiveBtn" aria-label="Archive">
+        <button class="icon-btn" id="modalCollaborateBtn" aria-label="Collaborators" title="Collaborators">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        </button>
+        <button class="icon-btn" id="modalArchiveBtn" aria-label="Archive" title="Archive">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z"/></svg>
         </button>
-        <button class="icon-btn" id="modalPinBtn" aria-label="Pin note">
+        <button class="icon-btn" id="modalPinBtn" aria-label="Pin note" title="Pin note">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 4v7l2 3v2h-6v5l-1 1-1-1v-5H5v-2l2-3V4c0-1.1.9-2 2-2h6c1.1 0 2 .9 2 2z"/></svg>
         </button>
-        <button class="icon-btn" id="modalTrashBtn" aria-label="Delete" style="color:#f28b82;">
+        <button class="icon-btn" id="modalPreviewBtn" aria-label="Toggle Markdown Preview" title="Toggle Markdown Preview">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+        </button>
+        <button class="icon-btn" id="modalTrashBtn" aria-label="Delete" style="color:#f28b82;" title="Delete">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
         </button>
+        <button class="icon-btn" id="modalMoreBtn" aria-label="More" title="More">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+        </button>
       </div>
-      <button class="editor-close-btn" id="modalCloseBtn">Close</button>
+      <button class="editor-close-btn" id="modalCloseBtn" title="Close and save">Close</button>
     </div>
   </div>
 </div>
@@ -251,7 +272,13 @@
           <button class="btn-secondary" id="addRelayBtn" style="height:36px;padding:0 16px;">Add</button>
         </div>
       </div>
-
+      <div style="border-top:1px solid var(--border-card);padding-top:16px;margin-top:8px;">
+        <div style="font-size:14px;font-weight:500;margin-bottom:8px;">Appearance</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-secondary" id="themeDarkBtn" style="flex:1;height:36px;">Dark Theme</button>
+          <button class="btn-secondary" id="themeOledBtn" style="flex:1;height:36px;">OLED Black</button>
+        </div>
+      </div>
     </div>
 
     <div style="display:flex;justify-content:flex-end;padding-top:16px;border-top:1px solid var(--border-card);margin-top:16px;">
@@ -282,6 +309,35 @@
 <div class="popup-menu" id="labelsPickerPopup" style="padding:8px 0;min-width:200px;">
   <div style="font-size:12px;color:var(--text-hint);font-weight:500;padding:4px 12px 8px;">Label note</div>
   <div id="labelsPickerList" style="max-height:200px;overflow-y:auto;"></div>
+</div>
+
+<!-- Collaborators Picker Popup -->
+<div class="popup-menu" id="collaboratorsPickerPopup" style="padding:12px;min-width:285px;max-width:320px;">
+  <div style="font-size:13px;color:var(--text-hint);font-weight:600;padding:4px 0 8px;border-bottom:1px solid var(--border-card);margin-bottom:8px;">Collaborators</div>
+  <div id="collaboratorsList" style="max-height:160px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
+  <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--border-card);padding-top:10px;">
+    <div style="font-size:11px;font-weight:500;color:var(--text-hint);">Add collaborator (hex or npub)</div>
+    <div style="display:flex;gap:6px;">
+      <input type="text" class="form-input" id="newCollaboratorInput" placeholder="npub1... or hex key" style="flex:1;height:32px;font-size:12px;">
+      <button class="btn-primary" id="addCollaboratorBtn" style="height:32px;padding:0 12px;font-size:12px;cursor:pointer;">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- More Options Popup Menu -->
+<div class="popup-menu" id="moreOptionsPopup" style="padding:6px;min-width:180px;">
+  <div class="menu-item" id="moreLabelBtn">
+    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="margin-right:8px;color:var(--icon-default);"><path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z"/></svg>
+    <span>Add label</span>
+  </div>
+  <div class="menu-item" id="morePreviewBtn">
+    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="margin-right:8px;color:var(--icon-default);"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+    <span>Toggle Markdown</span>
+  </div>
+  <div class="menu-item" id="moreTrashBtn" style="color:#f28b82;">
+    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="margin-right:8px;color:#f28b82;"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+    <span>Delete note</span>
+  </div>
 </div>
 
 <script type="module" src="app.js"></script>

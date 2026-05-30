@@ -2,3 +2,4 @@
 node_modules/
 .system_generated/
 .gemini/
+dist/
