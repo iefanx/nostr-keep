@@ -4,7 +4,7 @@
  * Enables complete offline operation as fallback.
  */
 
-const CACHE_NAME = 'nostr-keep-cache-v19';
+const CACHE_NAME = 'nostr-keep-cache-v20';
 const APP_FILES = [
   './',
   './index.html',
@@ -50,6 +50,11 @@ self.addEventListener('activate', (e) => {
 
 // Fetch: Network-first for app files, cache-first for CDN/external
 self.addEventListener('fetch', (e) => {
+  // Only handle HTTP/HTTPS requests (ignores chrome-extension:// and other non-standard schemes)
+  if (!e.request.url.startsWith('http')) {
+    return;
+  }
+
   if (e.request.method !== 'GET' || e.request.url.startsWith('ws')) {
     return;
   }
